@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Gallery | by masonx</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ОСНОВНІ СТИЛІ */
+        body {
+            background-color: #080807;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            position: sticky;
+            top: 0;
+            background: rgba(8, 8, 7, 0.9);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo-text { font-family: 'Cinzel', serif; font-size: 24px; letter-spacing: 4px; color: #fffaf0; text-transform: uppercase; }
+        
+        nav { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 50px; padding: 8px 30px; display: flex; gap: 20px; }
+        nav a { text-decoration: none; color: #888; font-size: 13px; font-weight: 500; transition: 0.3s; cursor: pointer; }
+        nav a:hover, nav a.active { color: #ffffff; }
+
+        .mason-signature {
+            text-decoration: none;
+            color: white;
+            opacity: 0.6;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .mason-signature:hover {
+            opacity: 1;
+            text-shadow: 0 0 8px #fff, 0 0 15px #fff;
+        }
+
+        .main-content { padding: 40px 50px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+
+        .card-item {
+            border-radius: 16px;
+            overflow: hidden;
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .card-item img { width: 100%; display: block; }
+        .card-item:hover { transform: translateY(-8px); border-color: rgba(255, 255, 255, 0.2); }
+
+        /* ЛАЙТБОКС */
+        #lightbox {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.4s ease;
+            z-index: 1000;
+        }
+
+        #lightbox.active { opacity: 1; visibility: visible; }
+
+        .lightbox-glow-container {
+            position: relative;
+            padding: 2px;
+            border-radius: 34px;
+            background: linear-gradient(135deg, #ffae42, rgba(255, 174, 66, 0.1), #ffae42);
+            box-shadow: 0 0 60px rgba(255, 174, 66, 0.2);
+            max-width: 420px;
+            width: 90%;
+            transition: 0.4s;
+        }
+
+        /* КАТЕГОРІЇ СЯЙВА */
+        .moderator-glow {
+            background: linear-gradient(135deg, #ff0000, rgba(255, 0, 0, 0.1), #ff0000) !important;
+            box-shadow: 0 0 70px rgba(255, 0, 0, 0.4) !important;
+        }
+        .bulker-glow {
+            background: linear-gradient(135deg, #2e7d32, rgba(46, 125, 50, 0.1), #2e7d32) !important;
+            box-shadow: 0 0 70px rgba(46, 125, 50, 0.4) !important;
+        }
+        .og-glow {
+            background: linear-gradient(135deg, #a0522d, rgba(160, 82, 45, 0.1), #ff8c00) !important;
+            box-shadow: 0 0 70px rgba(160, 82, 45, 0.4) !important;
+        }
+        .contributor-glow {
+            background: linear-gradient(135deg, #00bfff, rgba(0, 191, 255, 0.1), #00bfff) !important;
+            box-shadow: 0 0 70px rgba(0, 191, 255, 0.4) !important;
+        }
+
+        .lightbox-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .card-detail-img { width: 100%; border-radius: 20px; margin-bottom: 20px; }
+        .card-name { font-family: 'Cinzel', serif; font-size: 26px; margin: 10px 0 5px; }
+        .card-username { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 15px; }
+        .card-bio { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.8); }
+
+        .card-tags { display: flex; justify-content: center; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+        .tag { padding: 5px 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; font-size: 11px; background: rgba(255,255,255,0.05); color: #ccc; }
+
+        .follow-btn {
+            background: white; color: black; border: none; padding: 10px 40px;
+            border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 25px;
+        }
+        .follow-btn:hover { transform: scale(1.05); background: #f0f0f0; }
+
+        .footer-logo { margin-top: 25px; font-size: 11px; opacity: 0.3; letter-spacing: 2px; }
+
+        @media (max-width: 768px) { .gallery-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-text">Bulk</div>
+    <nav id="category-nav">
+        <a data-filter="all" class="active">Home</a>
+        <a data-filter="team">Team</a>
+        <a data-filter="moderator">Moderator</a>
+        <a data-filter="og">Og</a>
+        <a data-filter="contributor">Contributor</a> 
+        <a data-filter="bulker">Bulker</a>
+    </nav>
+    <a href="https://x.com/The_MasonX" target="_blank" class="mason-signature">by masonx</a>
+</header>
+
+<main class="main-content">
+    <div class="gallery-grid" id="gallery">
+
+        <div class="card-item" data-category="team" 
+             data-name="Jun" 
+             data-user="@jun | bulk"
+             data-twitter="https://x.com/junbug_sol"
+             data-bio="Sup, my name is Jun, and I’m a chill guy. In the Bulk community, I just enjoy everything that’s happening. I’m also the founder of the project. I love joining karaoke sessions and I really love our community. gBulkk fam!"
+             data-full-img="team_1_large.png" 
+             data-tags="Founder,Team,Chill">
+            <img src="team_1.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="moderator" 
+             data-name="rizzy_sol" 
+             data-user="@rizzy | bulk"
+             data-twitter="https://x.com/rizzy_sol"
+             data-bio="Hi, my name is Rizzy, and I’m a chill guy. In the Bulk community, I’m not just responsible for the vibe and the memes I’m a real part of all of this.I’m here to create momentum and bring people together into one strong, untiled community. I’m always on the same wavelength with you!"
+             data-full-img="team_1_large.png" 
+             data-tags="chill Guy,Vibe Creator,Moderator">
+            <img src="Mod_1.png" alt="Preview">
+        </div>
+        
+        <div class="card-item" data-category="og" 
+             data-name="Serukara" 
+             data-user="@Serukara | Bulk"
+             data-twitter="https://x.com/serukara"
+             data-bio="Sup, my name is Serukara. I’ve been in the Bulk community for almost half a year. I got the OG role here and made many new good connections. I really like the vibe in the community and the atmosphere that has always been and will always be here. gBulk fam."
+             data-full-img="og_1_large.png" 
+             data-tags="OG, Vibes bro,chill bro">
+            <img src="og_1.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="contributor" 
+             data-name="Samir" 
+             data-user="@Samir | Bulk"
+             data-twitter="https://x.com/SamirAhame96036"
+             data-bio="Hi, my name is Samir, and I’m a chill guy. I’m not just responsible for the vibe and the memes I live this, and I’m an essential part of the movement. For me, Bulk is more than just a community it’s a second home, I’m extremely active here, and there’s a place in my heart for each and every one of you.!"
+             data-full-img="mod_1_large.png" 
+             data-tags="chill,Bro,contributor">
+            <img src="contributor_1.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Twinkle" 
+             data-user="@Twinkle | Bulk"
+             data-twitter="https://x.com/Twinkle1150345"
+             data-bio="Hi, my name is Twinkle, and I’m a chill girl. In the Bulk community, I just enjoy everything that’s happening. People there remember me well because of my signature “meow.” I’ve got that special meow vibe.!"
+             data-full-img="mod_1_large.png" 
+             data-tags="chill,Girl,Bulker">
+            <img src="Bulker_1.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="moderator" 
+             data-name="Optibanty" 
+             data-user="@Optibanty | bulk"
+             data-twitter="https://x.com/optibantyy"
+             data-bio="Hi, my name is Optibanty, and I’m a chill girl. In the Bulk community, I love hosting karaoke sessions where people can just relax and have fun singing together. I’m here to create momentum and bring people together into one strong, united community. gBulk!"
+             data-full-img="team_1_large.png" 
+             data-tags="chill Girl,Vibe Creator,Moderator">
+            <img src="Mod_2.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="team" 
+             data-name="kdot" 
+             data-user="@kdot | bulk"
+             data-twitter="https://x.com/kdotcrypto"
+             data-bio="Hi, my name is kdot, and I’m a chill guy. In the Bulk community, I just enjoy everything that’s happening. People know me very well as the founder. I also love to smoke and relax with my community during AMAs. Love you, Bulk.!"
+             data-full-img="team_1_large.png" 
+             data-tags="chill Boy,co-founder,Team">
+            <img src="team_2.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Naeem" 
+             data-user="@Naeem | bulk"
+             data-twitter="https://x.com/Naeemkhankhoso"
+             data-bio="Sup, my name is Naeem, and I’m one of those people who loves having a good time with friends. I’m here to create a great vibe and enjoy the moment. I also really enjoy spending time with interesting people here in the Bulk community.!"
+             data-full-img="team_1_large.png" 
+             data-tags="chill Bro,Bulker, Vibes bro">
+            <img src="bulker_3.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="what1sl0ve" 
+             data-user="@what1sl0ve | bulk"
+             data-twitter="https://x.com/TimYifyisopse"
+             data-bio="Sup. What is love? Nice question, looking forward to finding the answer, while having a good time on Bulk and making new friends here as well as contributing as I can to this warm space).!"
+             data-full-img="team_1_large.png" 
+             data-tags="Web3 Boy,Vibe creator, Bulker">
+            <img src="bulker_4.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="moderator" 
+             data-name="Anekia" 
+             data-user="@Anekia | bulk"
+             data-twitter="https://x.com/Anekiaaa"
+             data-bio="hello my name is Anekia why am I here Honestly it touched me the most first of all because of the people here, the goal of the project, atmosphere is main thing which kept me just enjoy the time here without forcing myself or anythin its just super enjoyable, i been here since since October. gBulk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill girl,Moderator, Vibes girl">
+            <img src="Mod_3.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="coortezz" 
+             data-user="@coortezz | bulk"
+             data-twitter="https://x.com/CoortezzEth"
+             data-bio="Sup, my name is Coortezz, and I’m one of those people who loves having a good time with friends. I’m here to create a great vibe and enjoy the moment. My signature thing is creating content for Bulk. gBulk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill bro,Bulker, Vibes bro">
+            <img src="bulker_5.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="contributor" 
+             data-name="u7niversal" 
+             data-user="@u7niversal | bulk"
+             data-twitter="https://x.com/u7niversal"
+             data-bio="Sup, my name is u7niversal. I love spending time in Bulk with friends and creating interesting content for the community. During all my time in the Bulk community, I’ve met many interesting people. Thanks to everyone for the time spent together with me in the community. gBulk.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill bro,Contributor, Web3 bro">
+            <img src="contributor_2.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Nemo" 
+             data-user="@Nemo | bulk"
+             data-twitter="https://x.com/discomolve"
+             data-bio="Sup, my name is Nemo, and I’m one of those people who loves having a good time with friends. I’m here to create a great vibe and enjoy the moment. My signature thing is creating content for Bulk. gBulk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill bro,Bulker, vibes bro">
+            <img src="Bulker_6.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="og" 
+             data-name="Soothsayer" 
+             data-user="@https://x.com/Soothayerr"
+             data-twitter="https://x.com/Soothsayer"
+             data-bio="Sup, my name is Soothsayer. I really love spending my free time with friends and enjoying the moments in the Bulk community. I also really enjoy creating content for it. gBulk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill bro,Og, Vibes Bro">
+            <img src="Og_2.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Korgonxx" 
+             data-user="@Korgonxx | bulk"
+             data-twitter="https://x.com/Korgonxx"
+             data-bio="Sup, my name is Korgonxx. Why am I here? Honestly, I really like the atmosphere here, the team’s goals, and the ambitions. I also have many friends here. I love creating creative posts for this project. gBulkk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill boy,Bulker, Vibes Boy">
+            <img src="Bulker_9.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Aylos" 
+             data-user="@Aylos | bulk"
+             data-twitter="https://x.com/aylos__"
+             data-bio="My name is Aylos. When I got into the testnet, I was really surprised by the speed; it was CEX-level speed in Dex. The Bulk community and vibe are definitely in the tier 1 of what I like. I've been here for several months now.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill boy,Bulker,  WEB3 Boy">
+            <img src="Bulker_10.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="glowburger" 
+             data-user="@glowburger | bulk"
+             data-twitter="https://x.com/glowburger"
+             data-bio="MHello, my name is glowburger. Why am I here? Honestly, I like absolutely everything that’s happening here. I have many good friends that I spend time with, and I just really enjoy being here. gBulkk fammm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Burger,Bulker, Vibes Bro">
+            <img src="Bulker_11.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="og" 
+             data-name="qurool" 
+             data-user="@qurool | bulk"
+             data-twitter="https://x.com/Qurool13"
+             data-bio="Hi, I'm qurool. I really like this project because the moderators here are very supportive and friendly. It creates a real positive atmosphere among the community. I'm well remembered in Bulk as a contributor who created the kit brand and a lot of cool things in the new gBulkk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="WEB3 Boss,Og,broski">
+            <img src="Og_3.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="moderator" 
+             data-name="Orthodox" 
+             data-user="@Orthodox | bulk"
+             data-twitter="https://x.com/X_Orthodox"
+             data-bio="Hi, my name is Orthodox and I am responsible for the vibe in the Bulk community. You will never be bored with me. I bring energy, consistency, and the kind of atmosphere that makes people want to stay, engage, and build together.!"
+             data-full-img="team_1_large.png" 
+             data-tags="WEB3 Boss,Moderator,Vibes">
+            <img src="Mod_4.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Didi" 
+             data-user="@Didi | bulk"
+             data-twitter="https://x.com/jst_another_man"
+             data-bio="Sup,I'm Didi This project touched me because they support their community and also listen to them. And also the founder is quite knowledgeable on what he is building It is a fast trading website that makes trading easier for traders and also helps you maximize profit by entering the market early.!"
+             data-full-img="team_1_large.png" 
+             data-tags="WEB3 Boss,Bulker,Didi">
+            <img src="Bulker_14.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Crypost" 
+             data-user="@Crypost | bulk"
+             data-twitter="https://x.com/lamaCryp"
+             data-bio="sup, my name is Crypost I felt the power of the BULK community. Users don't just grind the project, they create a real sense of community. With a great team and technology, it's all here.What I like most about Bulk is the community vibe and the way the team approaches the project and the overall product development I am here five months gBulkkk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Vibe,Bulker,Crypost">
+            <img src="Bulker_15.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="team" 
+             data-name="Hotneblng" 
+             data-user="@Hotneblng | bulk"
+             data-twitter="https://x.com/hotlneblng_"
+             data-bio="sup,my name is hotlneblng.In the Bulk community I feel real strength, and I’m very happy to be here. Here I’m a professional clicker.With such an amazing team, we have big ambitions for development in the future.I really like being here.gBulkkkk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Vibe,Team,Hotneblng">
+            <img src="Team_3.png" alt="Preview">
+        </div>
+   
+        <div class="card-item" data-category="bulker" 
+             data-name="Abdullah" 
+             data-user="@Abdullah| bulk"
+             data-twitter="https://x.com/BuffaloCrypt"
+             data-bio="sup My name is Abdullah. I like working on the Bulk project, the atmosphere here is very good, I have been here for about 4 months.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Vibe,Bulker,Abdullah">
+            <img src="Bulker_16.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="melophile" 
+             data-user="@melophile| bulk"
+             data-twitter="https://x.com/melophile0646"
+             data-bio="sup My name is melophile the main thing that i like the most is on solana chain secondly the team and the members are really amazing calm and friendly i like working with them having a great vibe without any burdeneasy trading with a lot of new features (beginners friendly). I am here Around 4 months.gBulkkk famm.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Vibe,Bulker,melophile">
+            <img src="Bulker_17.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Zebyn" 
+             data-user="@Zebyn | bulk"
+             data-twitter="https://x.com/Zebyn_"
+             data-bio="Sup,My name is Zebyn, and this project touched me because I’ve always loved SOL and when I discovered Bulktrade, a perp DEX built on SOL, it instantly caught my attention, plus the SOL community really aligns with my vibe, which I feel strongly with Bulktrade as well, and I’ve been part of it since November 1, 2025.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Creator,Bulker,Zebyn">
+            <img src="Bulker_18.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Mr Kenneth" 
+             data-user="@Mr Kenneth | bulk"
+             data-twitter="https://x.com/MrKen40"
+             data-bio="sup my name is Mr Kenneth What got my attention is the fact that they are building what no one else is doing on Solana I love the community I'm here 3 months.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill,Bulker,Mr Kenneth">
+            <img src="Bulker_19.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Minori" 
+             data-user="@Minori | bulk"
+             data-twitter="https://x.com/minorilovesyou_"
+             data-bio="Hi everyone, my name is Minori. I’ve been an active member of this project since October 20, 2025.The biggest “green flag” of this project is its people. When the team is truly passionate about what they’re building and the community genuinely supports it, that’s the best proof of reliability. That kind of unity can’t be faked, and it’s exactly the kind of foundation that great and long-lasting things are built on.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Vibes,Bulker,minori">
+            <img src="Bulker_20.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Yaori" 
+             data-user="@Yaori | bulk"
+             data-twitter="https://x.com/Pavlin4ikM"
+             data-bio="My name is Yaori, I am interesting in Bulk because it’s building huge new era of dex, focused on fast and efficient trading. I like the idea of combining the speed of centralized exchanges + the vibe is amazing, love the community and team is pretty active and cool. I’m in bulk since September, so kinda early.gBulkk fam.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill,Bulker,Yaori">
+            <img src="Bulker_21.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="contributor" 
+             data-name="Stillhaze" 
+             data-user="@Stillhaze | bulk"
+             data-twitter="https://x.com/StillhazeE"
+             data-bio="I’m Stillhaze, and I’m moving in the direction of contributing to Bulk Trade. I saw the future in this project. I really liked the community and the team. I’m a creator of ideas and opportunities, promoting Bulk Trade across social media such as X, Telegram, and YouTube. Most of my contribution comes in different forms of support and activity. I also run a DAO called The DAO Of Legends with 100+ members. Real: Bulk my life.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Legend,Contributor,Stillhaze">
+            <img src="Contributor_3.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="contributor" 
+             data-name="Viktor" 
+             data-user="@Viktor | bulk"
+             data-twitter="https://x.com/_NearCrypto_"
+             data-bio="gBULK. My name is Viktor. The thing I like the most about BULK is the vibe in the Community, that’s what moved me to become part of the Community. I’ve been in BULK since last October.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Legend,Contributor,Viktor">
+            <img src="Contributor_4.png" alt="Preview">
+        </div>
+
+        <div class="card-item" data-category="bulker" 
+             data-name="Gazer" 
+             data-user="@Gazer | bulk"
+             data-twitter="https://x.com/gazergaxzy"
+             data-bio="gBULK. My name Name is Gazer Very rarely do you see projects with real innovation bulktrade identified the problem and are actively trying to solve it, if they scale through which i hope they do, it'll be my go to trading platform! Joined the dc community about Oct, 2025 if that counts .!"
+             data-full-img="team_1_large.png" 
+             data-tags="Chill,Bulker,Gazer">
+            <img src="Bulker_22.png" alt="Preview">
+        </div>
+
+    <div class="card-item" data-category="contributor" 
+             data-name="m4lka" 
+             data-user="@m4lka | bulk"
+             data-twitter="https://x.com/m4lkxx"
+             data-bio="gBULK. My name is m4lka. When I joined Bulk, I immediately felt warmth and kindness from the team toward the community, and I liked that right away. I haven’t been here that long—since around September but I’ve already fallen in love with this community.!"
+             data-full-img="team_1_large.png" 
+             data-tags="Legend,contributor,m4lka">
+            <img src="contributor_5.png" alt="Preview">
+        </div>
+
+<div class="card-item" data-category="bulker" 
+             data-name="Hermione" 
+             data-user="@Hermione | bulk"
+             data-twitter="https://x.com/hermione1848"
+             data-bio="gBULK. My name is Hermione. I really like the atmosphere both around and within the community the team treats the community like friends. I joined on February 2!"
+             data-full-img="team_1_large.png" 
+             data-tags="Girl,Bulker,Hermione">
+            <img src="Bulker_23.png" alt="Preview">
+        </div>
+
+<div class="card-item" data-category="bulker" 
+             data-name="Totosha" 
+             data-user="@Totosha | bulk"
+             data-twitter="https://x.com/Totosha_O"
+             data-bio="Hi, My name is Totosha. I love putting all my effort into drawings for Bulk because this community feels like a second home to me. I’ve been here since January 24!"
+             data-full-img="team_1_large.png" 
+             data-tags="Vibes,Bulker,Totosha">
+            <img src="Bulker_24.png" alt="Preview">
+        </div>
+
+<div class="card-item" data-category="bulker" 
+             data-name="ZOEFUNDS" 
+             data-user="@ZOEFUNDS | bulk"
+             data-twitter="https://x.com/BardOfTheBlocks"
+             data-bio="gBULK. My name is ZOEFUNDS. What really drew me to Bulk is its architecturethe Risk Engine, Bulk Tile, Bulk Agave, the Commit Path, and more. What I love most is the community: it feels like family the vibes, the communication, and how everyone connects. I’ve been here since December 30, 2025!"
+             data-full-img="team_1_large.png" 
+             data-tags="Vibes,Bulker,ZOEFUNDS">
+            <img src="Bulker_25.png" alt="Preview">
+        </div>
+
+<div class="card-item" data-category="bulker" 
+             data-name="Egoruy" 
+             data-user="@Egoruy | bulk"
+             data-twitter="https://x.com/egoruy_"
+             data-bio="gBULK. My name is Egoruy. What I like about this project is that it’s easy to understand for beginners in trading. Since I’m not a pro in this field, that’s very important to me. I also really appreciate that in the Ukrainian Discord branch, people are always ready to support and help. The community is great, the platform is simple to use, the UI/UX design is convenient, and I like the mascot too. I joined on February 8—my friend Golldyck recommended it to me!"
+             data-full-img="team_1_large.png" 
+             data-tags="Man,Bulker,Egoruy">
+            <img src="Bulker_26.png" alt="Preview">
+        </div>
+
+    </div>
+</main>
+
+<div id="lightbox">
+    <div class="lightbox-glow-container" id="glow-box">
+        <div class="lightbox-card">
+            <img id="detail-img" class="card-detail-img" src="" alt="">
+            <h2 class="card-name" id="detail-name">Name</h2>
+            <div class="card-username" id="detail-user">@username</div>
+            <p class="card-bio" id="detail-bio">Bio text...</p>
+            
+            <button class="follow-btn" id="follow-link">follow</button>
+
+            <div class="card-tags" id="detail-tags"></div>
+            
+            <div class="footer-logo">by mason</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const navLinks = document.querySelectorAll('#category-nav a');
+    const cards = document.querySelectorAll('.card-item');
+    const lightbox = document.getElementById('lightbox');
+    const glowBox = document.getElementById('glow-box');
+    const followBtn = document.getElementById('follow-link');
+    
+    const dImg = document.getElementById('detail-img');
+    const dName = document.getElementById('detail-name');
+    const dUser = document.getElementById('detail-user');
+    const dBio = document.getElementById('detail-bio');
+    const dTags = document.getElementById('detail-tags');
+
+    let currentTwitterUrl = "";
+
+    // Фільтрація
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            const filter = link.getAttribute('data-filter');
+            cards.forEach(card => {
+                const cat = card.getAttribute('data-category');
+                card.style.display = (filter === 'all' || filter === cat) ? 'block' : 'none';
+            });
+        });
+    });
+
+    // Відкриття лайтбоксу
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            const category = card.getAttribute('data-category');
+            dName.innerText = card.getAttribute('data-name');
+            dUser.innerText = card.getAttribute('data-user');
+            dBio.innerText = card.getAttribute('data-bio');
+            dImg.src = card.getAttribute('data-full-img');
+            
+            // Зберігаємо посилання на твіттер конкретної картки
+            currentTwitterUrl = card.getAttribute('data-twitter');
+
+            // Теги
+            dTags.innerHTML = '';
+            const tagsAttr = card.getAttribute('data-tags');
+            if (tagsAttr) {
+                tagsAttr.split(',').forEach(t => {
+                    const span = document.createElement('span');
+                    span.className = 'tag';
+                    span.innerText = t.trim();
+                    dTags.appendChild(span);
+                });
+            }
+
+            // Кольори світіння
+            glowBox.className = 'lightbox-glow-container';
+            if (category === 'moderator') glowBox.classList.add('moderator-glow');
+            if (category === 'bulker') glowBox.classList.add('bulker-glow');
+            if (category === 'og') glowBox.classList.add('og-glow');
+            if (category === 'contributor') glowBox.classList.add('contributor-glow');
+
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    // Логіка кнопки Follow
+    followBtn.addEventListener('click', () => {
+        if (currentTwitterUrl && currentTwitterUrl !== "") {
+            window.open(currentTwitterUrl, '_blank');
+        } else {
+            alert("Посилань на Twitter ще немає для цього учасника.");
+        }
+    });
+
+    // Закриття лайтбоксу
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+</script>
+
+</body>
+</html>
